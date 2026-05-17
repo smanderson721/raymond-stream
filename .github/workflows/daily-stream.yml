@@ -28,12 +28,9 @@ jobs:
 
       - name: Install OCI CLI
         run: |
-          curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh \
-            -o /tmp/oci-install.sh
-          chmod +x /tmp/oci-install.sh
-          /tmp/oci-install.sh --accept-all-defaults --install-dir "$HOME/lib/oracle-cli" \
-            --exec-dir "$HOME/bin" --update-path-and-enable-tab-completion false >/dev/null
-          echo "$HOME/bin" >> "$GITHUB_PATH"
+          python3 -m pip install --quiet --upgrade pip
+          python3 -m pip install --quiet oci-cli
+          oci --version
 
       - name: Configure OCI CLI
         env:
