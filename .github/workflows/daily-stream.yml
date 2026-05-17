@@ -1,0 +1,66 @@
+name: Daily Chess Stream
+
+# Runs daily at 22:00 UTC (≈ 6 PM ET / 3 PM PT).
+# Generates 40 games + commentary on bob (~30 min), streams to Twitch
+# for ~3 hours, then stops bob.
+on:
+  schedule:
+    - cron: "0 22 * * *"
+  workflow_dispatch:
+    inputs:
+      num_games:
+        description: "Games to generate"
+        default: "40"
+      voice:
+        description: "Gemini TTS voice"
+        default: "Enceladus"
+
+jobs:
+  stream:
+    runs-on: ubuntu-latest
+    timeout-minutes: 345    # ~5h45m — under GHA's 6h hard cap
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install OCI CLI
+        run: |
+          curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh \
+            -o /tmp/oci-install.sh
+          chmod +x /tmp/oci-install.sh
+          /tmp/oci-install.sh --accept-all-defaults --install-dir "$HOME/lib/oracle-cli" \
+            --exec-dir "$HOME/bin" --update-path-and-enable-tab-completion false >/dev/null
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Configure OCI CLI
+        env:
+          OCI_CONFIG: ${{ secrets.OCI_CONFIG }}
+          OCI_API_KEY: ${{ secrets.OCI_API_KEY }}
+        run: |
+          mkdir -p "$HOME/.oci"
+          printf '%s' "$OCI_CONFIG" > "$HOME/.oci/config"
+          printf '%s' "$OCI_API_KEY" > "$HOME/.oci/oci_api_key.pem"
+          chmod 600 "$HOME/.oci/config" "$HOME/.oci/oci_api_key.pem"
+
+      - name: Configure SSH key for bob
+        env:
+          BOB_SSH_PRIVATE_KEY: ${{ secrets.BOB_SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p "$HOME/.ssh"
+          printf '%s' "$BOB_SSH_PRIVATE_KEY" > "$HOME/.ssh/oracle_key"
+          chmod 600 "$HOME/.ssh/oracle_key"
+
+      - name: Install rsync (already present on ubuntu-latest, but be safe)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq rsync
+
+      - name: Run session
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          NUM_GAMES: ${{ github.event.inputs.num_games || '40' }}
+          VOICE:     ${{ github.event.inputs.voice     || 'Enceladus' }}
+        run: |
+          chmod +x run_session.sh
+          ./run_session.sh
