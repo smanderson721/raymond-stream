@@ -1,11 +1,11 @@
 name: Daily Chess Stream
 
-# Runs daily at 22:00 UTC (≈ 6 PM ET / 3 PM PT).
+# Runs daily at 16:00 UTC (= 12 PM ET during EDT / 11 AM ET during EST).
 # Generates 40 games + commentary on bob (~30 min), streams to Twitch
 # for ~3 hours, then stops bob.
 on:
   schedule:
-    - cron: "0 22 * * *"
+    - cron: "0 16 * * *"
   workflow_dispatch:
     inputs:
       num_games:
