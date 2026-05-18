@@ -38,8 +38,8 @@ jobs:
           OCI_API_KEY: ${{ secrets.OCI_API_KEY }}
         run: |
           mkdir -p "$HOME/.oci"
-          printf '%s' "$OCI_CONFIG" > "$HOME/.oci/config"
-          printf '%s' "$OCI_API_KEY" > "$HOME/.oci/oci_api_key.pem"
+          printf '%s\n' "$OCI_CONFIG" > "$HOME/.oci/config"
+          printf '%s\n' "$OCI_API_KEY" > "$HOME/.oci/oci_api_key.pem"
           chmod 600 "$HOME/.oci/config" "$HOME/.oci/oci_api_key.pem"
 
       - name: Configure SSH key for bob
@@ -47,8 +47,9 @@ jobs:
           BOB_SSH_PRIVATE_KEY: ${{ secrets.BOB_SSH_PRIVATE_KEY }}
         run: |
           mkdir -p "$HOME/.ssh"
-          printf '%s' "$BOB_SSH_PRIVATE_KEY" > "$HOME/.ssh/oracle_key"
+          printf '%s\n' "$BOB_SSH_PRIVATE_KEY" > "$HOME/.ssh/oracle_key"
           chmod 600 "$HOME/.ssh/oracle_key"
+          ssh-keygen -y -f "$HOME/.ssh/oracle_key" > /dev/null && echo "SSH key loads OK"
 
       - name: Install rsync (already present on ubuntu-latest, but be safe)
         run: sudo apt-get update -qq && sudo apt-get install -y -qq rsync
